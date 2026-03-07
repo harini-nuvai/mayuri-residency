@@ -156,7 +156,7 @@ export default function Reviews() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://search.google.com/local/reviews"
+              href="https://www.google.com/maps/place/Mayuri+Residency+Hotel+-+The+Premier+Hotel/@12.7865827,77.6723455,13z/data=!4m11!3m10!1s0x3bae714893cfc14f:0x65e2210d79d6baed!5m2!4m1!1i2!8m2!3d12.7865827!4d77.7485632!9m1!1b1!16s%2Fg%2F11v69szcjn?entry=ttu&g_ep=EgoyMDI2MDMwNC4xIKXMDSoASAFQAw%3D%3D"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary"

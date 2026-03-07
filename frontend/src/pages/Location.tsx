@@ -77,7 +77,7 @@ export default function Location() {
               </div>
 
               <a
-                href="https://www.google.com/maps/search/Mayuri+Residency+Bengaluru"
+                href="https://maps.app.goo.gl/9EfbeMVo3DdrauJR8"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary w-full justify-center"
