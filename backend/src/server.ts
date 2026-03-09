@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { Pool } from 'pg';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -43,13 +43,7 @@ async function initDb() {
   `);
 }
 
-const mailer = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendBookingEmail(booking: {
   id: number;
@@ -69,9 +63,9 @@ async function sendBookingEmail(booking: {
     'deluxe-suite':  'Deluxe Suite – ₹3,040+',
   };
 
-  await mailer.sendMail({
-    from: `"Mayuri Residency Bookings" <${process.env.GMAIL_USER}>`,
-    to: process.env.NOTIFY_EMAIL,
+  await resend.emails.send({
+    from: 'Mayuri Residency Bookings <onboarding@resend.dev>',
+    to: process.env.NOTIFY_EMAIL!,
     subject: `New Booking Request #${booking.id} – ${booking.name}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e5e5e5;border-radius:8px;overflow:hidden">
