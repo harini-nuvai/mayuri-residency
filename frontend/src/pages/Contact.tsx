@@ -41,7 +41,8 @@ export default function Contact() {
     setLoading(true);
     setServerError('');
     try {
-      const res = await fetch('/api/booking', {
+      const apiBase = import.meta.env.VITE_API_URL ?? '';
+      const res = await fetch(`${apiBase}/api/booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

@@ -12,7 +12,10 @@ const app = express();
 const PORT = Number(process.env.PORT) || 5001;
 
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors({ origin: 'http://localhost:5173' }));
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173'];
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '10kb' }));
 
 const db = new Database(path.join(process.cwd(), 'bookings.db'));
