@@ -24,8 +24,9 @@ services:
         sync: false
 
   # ── Frontend (React + Vite static site) ──────────────────────────────
-  - type: static
+  - type: web
     name: mayuri-residency-frontend
+    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
