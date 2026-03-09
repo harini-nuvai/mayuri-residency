@@ -27,11 +27,17 @@ db.prepare(`
     check_out TEXT NOT NULL,
     room_type TEXT NOT NULL,
     adults TEXT NOT NULL,
+    children TEXT NOT NULL DEFAULT '0',
     message TEXT,
     status TEXT DEFAULT 'pending',
     created_at TEXT DEFAULT (datetime('now'))
   )
 `).run();
+
+// migrate existing DB: add children column if it doesn't exist
+try {
+  db.prepare('ALTER TABLE bookings ADD COLUMN children TEXT NOT NULL DEFAULT \'0\'').run();
+} catch { /* column already exists */ }
 
 const mailer = nodemailer.createTransport({
   service: 'gmail',
@@ -50,6 +56,7 @@ async function sendBookingEmail(booking: {
   checkOut: string;
   roomType: string;
   adults: string;
+  children: string;
   message: string;
 }) {
   const roomLabels: Record<string, string> = {
@@ -102,6 +109,10 @@ async function sendBookingEmail(booking: {
               <td style="padding:10px 14px;color:#222">${booking.adults}</td>
             </tr>
             <tr>
+              <td style="padding:10px 14px;font-weight:bold;color:#555">Children</td>
+              <td style="padding:10px 14px;color:#222">${booking.children}</td>
+            </tr>
+            <tr style="background:#f9f6f0">
               <td style="padding:10px 14px;font-weight:bold;color:#555;vertical-align:top">Special Requests</td>
               <td style="padding:10px 14px;color:#222">${booking.message || '—'}</td>
             </tr>
@@ -128,9 +139,9 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.post('/api/booking', (req, res) => {
-  const { name, email, phone, checkIn, checkOut, roomType, adults, message } = req.body as Record<string, unknown>;
+  const { name, email, phone, checkIn, checkOut, roomType, adults, children, message } = req.body as Record<string, unknown>;
 
-  if (!name || !email || !phone || !checkIn || !checkOut || !roomType || !adults) {
+  if (!name || !email || !phone || !checkIn || !checkOut || !roomType || !adults || children === undefined) {
     res.status(400).json({ error: 'All required fields must be provided.' });
     return;
   }
@@ -147,14 +158,14 @@ app.post('/api/booking', (req, res) => {
   }
 
   const stmt = db.prepare(
-    `INSERT INTO bookings (name, email, phone, check_in, check_out, room_type, adults, message)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO bookings (name, email, phone, check_in, check_out, room_type, adults, children, message)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
 
   const result = stmt.run(
     clean(name), emailStr, clean(phone, 20),
     clean(checkIn, 20), clean(checkOut, 20),
-    clean(roomType, 50), clean(adults, 5), clean(message, 1000)
+    clean(roomType, 50), clean(adults, 5), clean(children, 5), clean(message, 1000)
   );
 
   console.log(`[Booking #${result.lastInsertRowid}] ${clean(name)} — ${emailStr}`);
@@ -168,6 +179,7 @@ app.post('/api/booking', (req, res) => {
     checkOut: clean(checkOut, 20),
     roomType: clean(roomType, 50),
     adults:   clean(adults, 5),
+    children: clean(children, 5),
     message:  clean(message, 1000),
   }).catch(err => console.error('[Email error]', err));
 
