@@ -14,6 +14,7 @@ const bookingSchema = z.object({
   checkOut:  z.string().min(1,  'Check-out date is required'),
   roomType:  z.string().min(1,  'Please select a room type'),
   adults:    z.string().min(1,  'Number of adults is required'),
+  children:  z.string().min(1,  'Number of children is required'),
   message:   z.string().optional(),
 });
 
@@ -67,7 +68,7 @@ export default function Contact() {
         className="h-64 flex items-center justify-center"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(26,26,46,0.75), rgba(26,26,46,0.75)), url(https://images.unsplash.com/photo-1551882547-ff40c63fe2dc?w=1400&q=80)',
+            'linear-gradient(rgba(26,26,46,0.65), rgba(26,26,46,0.65)), url(/gallery/lobby-reception.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -283,23 +284,43 @@ export default function Contact() {
                             <p className="text-red-500 text-xs mt-1">{errors.checkOut.message}</p>
                           )}
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-hotel-dark mb-1.5">
-                            Adults *
-                          </label>
-                          <select
-                            {...register('adults')}
-                            className={inputClass(errors.adults)}
-                          >
-                            <option value="">Select</option>
-                            <option value="1">1 Adult</option>
-                            <option value="2">2 Adults</option>
-                            <option value="3">3 Adults</option>
-                            <option value="4">4 Adults</option>
-                          </select>
-                          {errors.adults && (
-                            <p className="text-red-500 text-xs mt-1">{errors.adults.message}</p>
-                          )}
+                        <div className="grid grid-cols-2 gap-3 col-span-full">
+                          <div>
+                            <label className="block text-sm font-medium text-hotel-dark mb-1.5">
+                              Adults *
+                            </label>
+                            <select
+                              {...register('adults')}
+                              className={inputClass(errors.adults)}
+                            >
+                              <option value="">Select</option>
+                              <option value="1">1 Adult</option>
+                              <option value="2">2 Adults</option>
+                              <option value="3">3 Adults</option>
+                              <option value="4">4 Adults</option>
+                            </select>
+                            {errors.adults && (
+                              <p className="text-red-500 text-xs mt-1">{errors.adults.message}</p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-hotel-dark mb-1.5">
+                              Children *
+                            </label>
+                            <select
+                              {...register('children')}
+                              className={inputClass(errors.children)}
+                            >
+                              <option value="">Select</option>
+                              <option value="0">0 Children</option>
+                              <option value="1">1 Child</option>
+                              <option value="2">2 Children</option>
+                              <option value="3">3 Children</option>
+                            </select>
+                            {errors.children && (
+                              <p className="text-red-500 text-xs mt-1">{errors.children.message}</p>
+                            )}
+                          </div>
                         </div>
                       </div>
 

@@ -45,7 +45,7 @@ export default function About() {
               className="relative"
             >
               <img
-                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&q=80"
+                src="/gallery/lobby-wide.jpg"
                 alt="Mayuri Residency Hotel"
                 className="rounded-2xl w-full object-cover h-[450px] shadow-2xl"
               />
@@ -135,10 +135,10 @@ export default function About() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=80',
-              'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80',
-              'https://images.unsplash.com/photo-1551882547-ff40c63fe2dc?w=400&q=80',
-              'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&q=80',
+              '/gallery/exterior-night.jpg',
+              '/gallery/room-twin-2.jpg',
+              '/gallery/lobby-reception.jpg',
+              '/gallery/room-double.jpg',
             ].map((url, i) => (
               <div key={i} className="rounded-xl overflow-hidden h-44">
                 <img src={url} alt="Hotel" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />

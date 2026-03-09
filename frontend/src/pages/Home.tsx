@@ -184,7 +184,7 @@ export default function Home() {
               className="relative"
             >
               <img
-                src="https://images.unsplash.com/photo-1519449556851-5720b33024e7?w=700&q=80"
+                src="/gallery/lift-lobby.jpg"
                 alt="Hotel Lobby"
                 className="rounded-2xl shadow-2xl w-full object-cover h-96"
               />
@@ -316,7 +316,7 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="bg-hotel-cream rounded-2xl p-6"
+                className="bg-hotel-cream rounded-2xl p-6 flex flex-col"
               >
                 <div className="flex mb-3">
                   {[...Array(5)].map((_, j) => (
@@ -328,11 +328,11 @@ export default function Home() {
                     />
                   ))}
                 </div>
-                <p className="text-hotel-muted text-sm leading-relaxed mb-4 italic">
+                <p className="text-hotel-muted text-sm leading-relaxed mb-4 italic flex-1">
                   "{review.comment}"
                 </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-hotel-gold text-white flex items-center justify-center text-sm font-bold">
+                <div className="flex items-center gap-3 mt-auto">
+                  <div className="w-10 h-10 rounded-full bg-hotel-gold text-white flex items-center justify-center text-sm font-bold shrink-0">
                     {review.avatar}
                   </div>
                   <div>

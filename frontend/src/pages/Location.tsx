@@ -77,7 +77,7 @@ export default function Location() {
               </div>
 
               <a
-                href="https://maps.app.goo.gl/9EfbeMVo3DdrauJR8"
+                href="https://www.google.com/maps/place/Mayuri+Residency+-+BTM+Layout/@12.9164386,77.5807023,14z/data=!4m20!1m10!3m9!1s0x3bae714893cfc14f:0x65e2210d79d6baed!2sMayuri+Residency+Hotel+-+The+Premier+Hotel!5m2!4m1!1i2!8m2!3d12.7865827!4d77.7485632!16s%2Fg%2F11v69szcjn!3m8!1s0x3bae1573ce57a88f:0x55e8d58cb92f2185!5m2!4m1!1i2!8m2!3d12.9164305!4d77.6057846!16s%2Fg%2F11x5jhlyy8?entry=ttu&g_ep=EgoyMDI2MDMwNC4xIKXMDSoASAFQAw%3D%3D"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary w-full justify-center"
@@ -92,7 +92,7 @@ export default function Location() {
               <div className="rounded-2xl overflow-hidden shadow-lg h-96">
                 <iframe
                   title="Mayuri Residency Location"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3890.1234!2d77.692200!3d12.783300!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae6e8a3c000001%3A0x1234567890abcdef!2sMayuri%20Residency!5e0!3m2!1sen!2sin!4v1620000000000"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.0!2d77.6057846!3d12.9164305!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1573ce57a88f%3A0x55e8d58cb92f2185!2sMayuri%20Residency%20-%20BTM%20Layout!5e0!3m2!1sen!2sin!4v1741500000000!5m2!1sen!2sin"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}
@@ -158,8 +158,8 @@ export default function Location() {
           <h2 className="text-2xl font-serif font-bold text-white mb-8">Transportation Options</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { icon: Plane,  label: 'Airport Transfer', desc: 'Kempegowda Airport (~65 km) — we arrange pickup' },
-              { icon: Bus,    label: 'Bus Services',     desc: 'Madiwala Bus Stop – 2.9 km | Silk Board – 2.7 km' },
+              { icon: Plane,  label: 'Airport Transfer', desc: 'Kempegowda Airport (41 km) — we arrange pickup' },
+              { icon: Bus,    label: 'Metro & Bus',      desc: 'Rashtriya Vidyalaya Metro – 3.3 km | City Railway – 10 km' },
               { icon: Car,    label: 'Private Parking',  desc: 'Free secure private parking on premises' },
             ].map(({ icon: Icon, label, desc }) => (
               <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">

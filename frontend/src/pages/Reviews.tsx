@@ -1,18 +1,10 @@
 import { motion } from 'framer-motion';
-import { Star, Quote } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { reviews, hotelInfo } from '../data/hotel';
 
 const fadeUp = {
   hidden:  { opacity: 0, y: 20 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.5, delay: i * 0.1 } }),
-};
-
-const sourceBadgeColor: Record<string, string> = {
-  Google:       'bg-blue-100 text-blue-700',
-  'Booking.com':'bg-indigo-100 text-indigo-700',
-  TripAdvisor:  'bg-green-100 text-green-700',
-  MakeMyTrip:   'bg-red-100 text-red-700',
-  Agoda:        'bg-orange-100 text-orange-700',
 };
 
 export default function Reviews() {
@@ -104,12 +96,10 @@ export default function Reviews() {
                 whileInView="visible"
                 viewport={{ once: true }}
                 custom={i}
-                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative"
+                className="bg-hotel-cream rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col"
               >
-                <Quote size={30} className="text-hotel-gold/20 absolute top-4 right-4" />
-
                 {/* Stars */}
-                <div className="flex mb-4">
+                <div className="flex mb-3">
                   {[...Array(5)].map((_, j) => (
                     <Star
                       key={j}
@@ -121,24 +111,19 @@ export default function Reviews() {
                 </div>
 
                 {/* Comment */}
-                <p className="text-hotel-muted text-sm leading-relaxed mb-5 italic">
+                <p className="text-hotel-muted text-sm leading-relaxed mb-5 italic flex-1">
                   "{review.comment}"
                 </p>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-hotel-gold flex items-center justify-center text-white text-sm font-bold shrink-0">
-                      {review.avatar}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-hotel-dark text-sm">{review.name}</p>
-                      <p className="text-xs text-hotel-muted">{review.date}</p>
-                    </div>
+                <div className="flex items-center gap-3 mt-auto">
+                  <div className="w-10 h-10 rounded-full bg-hotel-gold flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {review.avatar}
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${sourceBadgeColor[review.source] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {review.source}
-                  </span>
+                  <div>
+                    <p className="font-semibold text-hotel-dark text-sm">{review.name}</p>
+                    <p className="text-xs text-hotel-muted">{review.date} · {review.source}</p>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -156,7 +141,7 @@ export default function Reviews() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://www.google.com/maps/place/Mayuri+Residency+Hotel+-+The+Premier+Hotel/@12.7865827,77.6723455,13z/data=!4m11!3m10!1s0x3bae714893cfc14f:0x65e2210d79d6baed!5m2!4m1!1i2!8m2!3d12.7865827!4d77.7485632!9m1!1b1!16s%2Fg%2F11v69szcjn?entry=ttu&g_ep=EgoyMDI2MDMwNC4xIKXMDSoASAFQAw%3D%3D"
+              href="https://www.google.com/maps/place/Mayuri+Residency+-+BTM+Layout/@12.9164386,77.5807023,14z/data=!4m22!1m10!3m9!1s0x3bae714893cfc14f:0x65e2210d79d6baed!2sMayuri+Residency+Hotel+-+The+Premier+Hotel!5m2!4m1!1i2!8m2!3d12.7865827!4d77.7485632!16s%2Fg%2F11v69szcjn!3m10!1s0x3bae1573ce57a88f:0x55e8d58cb92f2185!5m2!4m1!1i2!8m2!3d12.9164305!4d77.6057846!9m1!1b1!16s%2Fg%2F11x5jhlyy8?entry=ttu&g_ep=EgoyMDI2MDMwNC4xIKXMDSoASAFQAw%3D%3D"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary"
