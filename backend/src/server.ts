@@ -1,8 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { createClient } from '@libsql/client';
-import path from 'path';
+import { Pool } from 'pg';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
@@ -18,14 +17,15 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '10kb' }));
 
-const db = createClient({
-  url: `file:${path.join(process.cwd(), 'bookings.db')}`,
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes('railway') ? { rejectUnauthorized: false } : false,
 });
 
 async function initDb() {
-  await db.execute(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS bookings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT NOT NULL,
       phone TEXT NOT NULL,
@@ -36,13 +36,9 @@ async function initDb() {
       children TEXT NOT NULL DEFAULT '0',
       message TEXT,
       status TEXT DEFAULT 'pending',
-      created_at TEXT DEFAULT (datetime('now'))
+      created_at TIMESTAMP DEFAULT NOW()
     )
   `);
-  // migrate: add children column if missing
-  try {
-    await db.execute("ALTER TABLE bookings ADD COLUMN children TEXT NOT NULL DEFAULT '0'");
-  } catch { /* already exists */ }
 }
 
 const mailer = nodemailer.createTransport({
@@ -54,7 +50,7 @@ const mailer = nodemailer.createTransport({
 });
 
 async function sendBookingEmail(booking: {
-  id: number | bigint;
+  id: number;
   name: string;
   email: string;
   phone: string;
@@ -66,9 +62,9 @@ async function sendBookingEmail(booking: {
   message: string;
 }) {
   const roomLabels: Record<string, string> = {
-    'deluxe-double':    'Deluxe Double Room – ₹2,645+',
-    'twin':             'Twin Room – ₹3,040+',
-    'deluxe-suite':     'Deluxe Suite – ₹3,040+',
+    'deluxe-double': 'Deluxe Double Room – ₹2,645+',
+    'twin':          'Twin Room – ₹3,040+',
+    'deluxe-suite':  'Deluxe Suite – ₹3,040+',
   };
 
   await mailer.sendMail({
@@ -82,46 +78,17 @@ async function sendBookingEmail(booking: {
           <p style="color:#fff;margin:6px 0 0;font-size:13px">New Booking Request</p>
         </div>
         <div style="padding:28px">
-          <p style="margin:0 0 20px;font-size:15px;color:#333">
-            A new booking request (#${booking.id}) has been submitted. Details below:
-          </p>
+          <p style="margin:0 0 20px;font-size:15px;color:#333">Booking request #${booking.id} submitted:</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px">
-            <tr style="background:#f9f6f0">
-              <td style="padding:10px 14px;font-weight:bold;color:#555;width:40%">Full Name</td>
-              <td style="padding:10px 14px;color:#222">${booking.name}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 14px;font-weight:bold;color:#555">Email</td>
-              <td style="padding:10px 14px;color:#222"><a href="mailto:${booking.email}">${booking.email}</a></td>
-            </tr>
-            <tr style="background:#f9f6f0">
-              <td style="padding:10px 14px;font-weight:bold;color:#555">Phone</td>
-              <td style="padding:10px 14px;color:#222"><a href="tel:${booking.phone}">${booking.phone}</a></td>
-            </tr>
-            <tr>
-              <td style="padding:10px 14px;font-weight:bold;color:#555">Room Type</td>
-              <td style="padding:10px 14px;color:#222">${roomLabels[booking.roomType] ?? booking.roomType}</td>
-            </tr>
-            <tr style="background:#f9f6f0">
-              <td style="padding:10px 14px;font-weight:bold;color:#555">Check-in</td>
-              <td style="padding:10px 14px;color:#222">${booking.checkIn}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 14px;font-weight:bold;color:#555">Check-out</td>
-              <td style="padding:10px 14px;color:#222">${booking.checkOut}</td>
-            </tr>
-            <tr style="background:#f9f6f0">
-              <td style="padding:10px 14px;font-weight:bold;color:#555">Adults</td>
-              <td style="padding:10px 14px;color:#222">${booking.adults}</td>
-            </tr>
-            <tr>
-              <td style="padding:10px 14px;font-weight:bold;color:#555">Children</td>
-              <td style="padding:10px 14px;color:#222">${booking.children}</td>
-            </tr>
-            <tr style="background:#f9f6f0">
-              <td style="padding:10px 14px;font-weight:bold;color:#555;vertical-align:top">Special Requests</td>
-              <td style="padding:10px 14px;color:#222">${booking.message || '—'}</td>
-            </tr>
+            <tr style="background:#f9f6f0"><td style="padding:10px 14px;font-weight:bold;color:#555;width:40%">Full Name</td><td style="padding:10px 14px;color:#222">${booking.name}</td></tr>
+            <tr><td style="padding:10px 14px;font-weight:bold;color:#555">Email</td><td style="padding:10px 14px;color:#222">${booking.email}</td></tr>
+            <tr style="background:#f9f6f0"><td style="padding:10px 14px;font-weight:bold;color:#555">Phone</td><td style="padding:10px 14px;color:#222">${booking.phone}</td></tr>
+            <tr><td style="padding:10px 14px;font-weight:bold;color:#555">Room Type</td><td style="padding:10px 14px;color:#222">${roomLabels[booking.roomType] ?? booking.roomType}</td></tr>
+            <tr style="background:#f9f6f0"><td style="padding:10px 14px;font-weight:bold;color:#555">Check-in</td><td style="padding:10px 14px;color:#222">${booking.checkIn}</td></tr>
+            <tr><td style="padding:10px 14px;font-weight:bold;color:#555">Check-out</td><td style="padding:10px 14px;color:#222">${booking.checkOut}</td></tr>
+            <tr style="background:#f9f6f0"><td style="padding:10px 14px;font-weight:bold;color:#555">Adults</td><td style="padding:10px 14px;color:#222">${booking.adults}</td></tr>
+            <tr><td style="padding:10px 14px;font-weight:bold;color:#555">Children</td><td style="padding:10px 14px;color:#222">${booking.children}</td></tr>
+            <tr style="background:#f9f6f0"><td style="padding:10px 14px;font-weight:bold;color:#555;vertical-align:top">Special Requests</td><td style="padding:10px 14px;color:#222">${booking.message || '—'}</td></tr>
           </table>
           <div style="margin-top:24px;padding:14px;background:#fffbf0;border-left:4px solid #c9a84c;border-radius:4px;font-size:13px;color:#555">
             Booking ID: <strong>#${booking.id}</strong> &nbsp;|&nbsp; Status: <strong>Pending</strong>
@@ -164,37 +131,24 @@ app.post('/api/booking', async (req, res) => {
   }
 
   try {
-    const result = await db.execute({
-      sql: `INSERT INTO bookings (name, email, phone, check_in, check_out, room_type, adults, children, message)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        clean(name), emailStr, clean(phone, 20),
-        clean(checkIn, 20), clean(checkOut, 20),
-        clean(roomType, 50), clean(adults, 5), clean(children, 5), clean(message, 1000),
-      ],
-    });
+    const result = await pool.query(
+      `INSERT INTO bookings (name, email, phone, check_in, check_out, room_type, adults, children, message)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+      [clean(name), emailStr, clean(phone, 20), clean(checkIn, 20), clean(checkOut, 20),
+       clean(roomType, 50), clean(adults, 5), clean(children, 5), clean(message, 1000)]
+    );
 
-    const bookingId = result.lastInsertRowid;
+    const bookingId = result.rows[0].id;
     console.log(`[Booking #${bookingId}] ${clean(name)} — ${emailStr}`);
 
     sendBookingEmail({
-      id:       bookingId!,
-      name:     clean(name),
-      email:    emailStr,
-      phone:    clean(phone, 20),
-      checkIn:  clean(checkIn, 20),
-      checkOut: clean(checkOut, 20),
-      roomType: clean(roomType, 50),
-      adults:   clean(adults, 5),
-      children: clean(children, 5),
-      message:  clean(message, 1000),
+      id: bookingId, name: clean(name), email: emailStr,
+      phone: clean(phone, 20), checkIn: clean(checkIn, 20), checkOut: clean(checkOut, 20),
+      roomType: clean(roomType, 50), adults: clean(adults, 5),
+      children: clean(children, 5), message: clean(message, 1000),
     }).catch(err => console.error('[Email error]', err));
 
-    res.status(201).json({
-      success: true,
-      bookingId,
-      message: 'Booking request received! We will confirm within 2 to 4 hours.',
-    });
+    res.status(201).json({ success: true, bookingId, message: 'Booking request received! We will confirm within 2 to 4 hours.' });
   } catch (err) {
     console.error('[DB error]', err);
     res.status(500).json({ error: 'Failed to save booking. Please try again.' });
@@ -202,13 +156,8 @@ app.post('/api/booking', async (req, res) => {
 });
 
 app.get('/api/bookings', async (_req, res) => {
-  const result = await db.execute('SELECT * FROM bookings ORDER BY created_at DESC');
+  const result = await pool.query('SELECT * FROM bookings ORDER BY created_at DESC');
   res.json(result.rows);
-});
-
-app.use(express.static(path.join(process.cwd(), '..', 'frontend', 'dist')));
-app.get('/{*path}', (_req, res) => {
-  res.sendFile(path.join(process.cwd(), '..', 'frontend', 'dist', 'index.html'));
 });
 
 initDb().then(() => {
