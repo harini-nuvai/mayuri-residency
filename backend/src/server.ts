@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import Database from 'better-sqlite3';
+import { createClient } from '@libsql/client';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
@@ -18,29 +18,32 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '10kb' }));
 
-const db = new Database(path.join(process.cwd(), 'bookings.db'));
+const db = createClient({
+  url: `file:${path.join(process.cwd(), 'bookings.db')}`,
+});
 
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS bookings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    check_in TEXT NOT NULL,
-    check_out TEXT NOT NULL,
-    room_type TEXT NOT NULL,
-    adults TEXT NOT NULL,
-    children TEXT NOT NULL DEFAULT '0',
-    message TEXT,
-    status TEXT DEFAULT 'pending',
-    created_at TEXT DEFAULT (datetime('now'))
-  )
-`).run();
-
-// migrate existing DB: add children column if it doesn't exist
-try {
-  db.prepare('ALTER TABLE bookings ADD COLUMN children TEXT NOT NULL DEFAULT \'0\'').run();
-} catch { /* column already exists */ }
+async function initDb() {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS bookings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      check_in TEXT NOT NULL,
+      check_out TEXT NOT NULL,
+      room_type TEXT NOT NULL,
+      adults TEXT NOT NULL,
+      children TEXT NOT NULL DEFAULT '0',
+      message TEXT,
+      status TEXT DEFAULT 'pending',
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  // migrate: add children column if missing
+  try {
+    await db.execute("ALTER TABLE bookings ADD COLUMN children TEXT NOT NULL DEFAULT '0'");
+  } catch { /* already exists */ }
+}
 
 const mailer = nodemailer.createTransport({
   service: 'gmail',
@@ -63,9 +66,9 @@ async function sendBookingEmail(booking: {
   message: string;
 }) {
   const roomLabels: Record<string, string> = {
-    'deluxe-double':    'Deluxe Double Room – ₹2,000+',
-    'deluxe-twin':      'Deluxe Twin Room – ₹2,200+',
-    'family-executive': 'Family Executive Room – ₹3,000+',
+    'deluxe-double':    'Deluxe Double Room – ₹2,645+',
+    'twin':             'Twin Room – ₹3,040+',
+    'deluxe-suite':     'Deluxe Suite – ₹3,040+',
   };
 
   await mailer.sendMail({
@@ -141,7 +144,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-app.post('/api/booking', (req, res) => {
+app.post('/api/booking', async (req, res) => {
   const { name, email, phone, checkIn, checkOut, roomType, adults, children, message } = req.body as Record<string, unknown>;
 
   if (!name || !email || !phone || !checkIn || !checkOut || !roomType || !adults || children === undefined) {
@@ -160,42 +163,47 @@ app.post('/api/booking', (req, res) => {
     return;
   }
 
-  const stmt = db.prepare(
-    `INSERT INTO bookings (name, email, phone, check_in, check_out, room_type, adults, children, message)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  );
+  try {
+    const result = await db.execute({
+      sql: `INSERT INTO bookings (name, email, phone, check_in, check_out, room_type, adults, children, message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        clean(name), emailStr, clean(phone, 20),
+        clean(checkIn, 20), clean(checkOut, 20),
+        clean(roomType, 50), clean(adults, 5), clean(children, 5), clean(message, 1000),
+      ],
+    });
 
-  const result = stmt.run(
-    clean(name), emailStr, clean(phone, 20),
-    clean(checkIn, 20), clean(checkOut, 20),
-    clean(roomType, 50), clean(adults, 5), clean(children, 5), clean(message, 1000)
-  );
+    const bookingId = result.lastInsertRowid;
+    console.log(`[Booking #${bookingId}] ${clean(name)} — ${emailStr}`);
 
-  console.log(`[Booking #${result.lastInsertRowid}] ${clean(name)} — ${emailStr}`);
+    sendBookingEmail({
+      id:       bookingId!,
+      name:     clean(name),
+      email:    emailStr,
+      phone:    clean(phone, 20),
+      checkIn:  clean(checkIn, 20),
+      checkOut: clean(checkOut, 20),
+      roomType: clean(roomType, 50),
+      adults:   clean(adults, 5),
+      children: clean(children, 5),
+      message:  clean(message, 1000),
+    }).catch(err => console.error('[Email error]', err));
 
-  sendBookingEmail({
-    id:       result.lastInsertRowid,
-    name:     clean(name),
-    email:    emailStr,
-    phone:    clean(phone, 20),
-    checkIn:  clean(checkIn, 20),
-    checkOut: clean(checkOut, 20),
-    roomType: clean(roomType, 50),
-    adults:   clean(adults, 5),
-    children: clean(children, 5),
-    message:  clean(message, 1000),
-  }).catch(err => console.error('[Email error]', err));
-
-  res.status(201).json({
-    success: true,
-    bookingId: result.lastInsertRowid,
-    message: 'Booking request received! We will confirm within 2 to 4 hours.',
-  });
+    res.status(201).json({
+      success: true,
+      bookingId,
+      message: 'Booking request received! We will confirm within 2 to 4 hours.',
+    });
+  } catch (err) {
+    console.error('[DB error]', err);
+    res.status(500).json({ error: 'Failed to save booking. Please try again.' });
+  }
 });
 
-app.get('/api/bookings', (_req, res) => {
-  const rows = db.prepare('SELECT * FROM bookings ORDER BY created_at DESC').all();
-  res.json(rows);
+app.get('/api/bookings', async (_req, res) => {
+  const result = await db.execute('SELECT * FROM bookings ORDER BY created_at DESC');
+  res.json(result.rows);
 });
 
 app.use(express.static(path.join(process.cwd(), '..', 'frontend', 'dist')));
@@ -203,6 +211,11 @@ app.get('/{*path}', (_req, res) => {
   res.sendFile(path.join(process.cwd(), '..', 'frontend', 'dist', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Mayuri Residency backend on http://localhost:${PORT}`);
+initDb().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Mayuri Residency backend on http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Failed to init DB:', err);
+  process.exit(1);
 });
